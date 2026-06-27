@@ -27,7 +27,16 @@ with col1:
 with col2:
     # Plot histogram for age of patients
     fig, ax = plt.subplots(figsize=(6, 3))
-    if 1==0: # Evaluate True to show plot
+    if 1==1: # Evaluate True to show plot
         df['age'].hist(bins = 10, ax=ax)
         fig.suptitle("Age Distribution")
         st.pyplot(fig)
+# 1. Add a subheader for your new chart section
+st.subheader("**Distribution of Features (Histogram)**")
+
+# 2. Let the user choose which column they want to see a histogram for
+# (This extracts the column headers like age, sex, bmi, bp, etc.)
+selected_column = st.selectbox("Select a column to plot:", df.columns)
+
+# 3. Use Streamlit's built-in interactive bar/histogram chart
+st.bar_chart(df[selected_column])
