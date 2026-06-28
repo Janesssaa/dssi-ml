@@ -1,56 +1,55 @@
 import streamlit as st
-from src.inference import get_prediction
+import pandas as pd
+from sklearn import datasets
+from sklearn.ensemble import RandomForestClassifier
 
-# Initialise session state variable
-if 'input_features' not in st.session_state:
-    st.session_state['input_features'] = {}
+st.write("""
+# Simple Iris Flower Prediction App
+This app predicts the **Iris flower** type based on your inputs!
+""")
 
-def app_sidebar():
-    st.sidebar.header('Applicant')
-    dep = st.sidebar.text_input("No. of Dependents")
-    ln_amt = st.sidebar.text_input("Loan Amount '000s", placeholder="in '000s")
-    ln_tm = st.sidebar.text_input("Loan Term")
-    cbl = st.sidebar.text_input("CIBIL Score (300-900)")
-    rav = st.sidebar.text_input("Residential Assets Value '000s", placeholder="in '000s")
-    def get_input_features():
-        input_features = {'dep': int(dep),
-                          'ln_amt': int(ln_amt),
-                          'ln_tm': int(ln_tm),
-                          'cbl': int(cbl),
-                          'rav': int(rav)*1000
-                         }
-        return input_features
-    sdb_col1, sdb_col2 = st.sidebar.columns(2)
-    with sdb_col1:
-        predict_button = st.sidebar.button("Assess", key="predict")
-    with sdb_col2:
-        reset_button = st.sidebar.button("Reset", key="clear")
-    if predict_button:
-        st.session_state['input_features'] = get_input_features()
-    if reset_button:
-        st.session_state['input_features'] = {}
-    return None
+# 1. Sidebar for User Inputs
+st.sidebar.header('User Input Parameters')
 
-def app_body():
-    title = '<p style="font-family:arial, sans-serif; color:Black; font-size: 40px;"><b> Welcome to DSSI Loan Assessment</b></p>'
-    st.markdown(title, unsafe_allow_html=True)
-    default_msg = '**System assessment says:** {}'
-    if st.session_state['input_features']:
-        assessment = get_prediction(no_of_dependents=st.session_state['input_features']['dep'],
-                                    loan_amount=st.session_state['input_features']['ln_amt'],
-                                    loan_term=st.session_state['input_features']['ln_tm'],
-                                    cibil_score=st.session_state['input_features']['cbl'],
-                                    residential_assets_value=st.session_state['input_features']['rav'])
-        if assessment == 1:
-            st.success(default_msg.format('Approved'))
-        else:
-            st.warning(default_msg.format('Rejected'))
-    return None
+def user_input_features():
+    sepal_length = st.sidebar.slider('Sepal length (cm)', 4.3, 7.9, 5.4)
+    sepal_width = st.sidebar.slider('Sepal width (cm)', 2.0, 4.4, 3.4)
+    petal_length = st.sidebar.slider('Petal length (cm)', 1.0, 6.9, 1.3)
+    petal_width = st.sidebar.slider('Petal width (cm)', 0.1, 2.5, 0.2)
+    
+    data = {
+        'sepal length (cm)': sepal_length,
+        'sepal width (cm)': sepal_width,
+        'petal length (cm)': petal_length,
+        'petal width (cm)': petal_width
+    }
+    features = pd.DataFrame(data, index=[0])
+    return features
 
-def main():
-    app_sidebar()
-    app_body()
-    return None
+df_input = user_input_features()
 
-if __name__ == "__main__":
-    main()
+# Display the user input parameters
+st.subheader('User Input parameters')
+st.write(df_input)
+
+# 2. Model Training (For a live demo, training on the fly; or load from your /models folder)
+iris = datasets.load_iris()
+X = iris.data
+Y = iris.target
+
+clf = RandomForestClassifier()
+clf.fit(X, Y)
+
+# 3. Inference / Prediction
+prediction = clf.predict(df_input)
+prediction_proba = clf.predict_proba(df_input)
+
+# 4. Displaying Results
+st.subheader('Class Labels and their corresponding index number')
+st.write(pd.DataFrame({'Species': iris.target_names}))
+
+st.subheader('Prediction')
+st.write(f"**{iris.target_names[prediction[0]]}**")
+
+st.subheader('Prediction Probability')
+st.write(pd.DataFrame(prediction_proba, columns=iris.target_names))
